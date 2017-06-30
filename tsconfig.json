@@ -1,0 +1,35 @@
+{
+	"compileOnSave": false,
+	"compilerOptions": {
+		"target": "es6",
+		"declaration": false,
+		"module": "commonjs",
+		"sourceMap": true,
+		"moduleResolution": "node",
+		"noImplicitAny": true,
+		"outDir": "dist",
+		"preserveConstEnums": true,
+		"removeComments": true,
+		"typeRoots": [
+			"node_modules/*"
+		],
+		"lib": [
+			"es2016",
+			"dom"
+		],
+		"types": [
+			"commander",
+			"node",
+			"mocha",
+			"chai",
+			"sinon"
+		]
+	},
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"tests/**/*",
+		"templates/**/*"
+	]
+}

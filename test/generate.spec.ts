@@ -8,19 +8,35 @@ import * as path from 'path';
 import * as dirUtil from "../src/utils/rmdir-r";
 import { AppDescriptor } from "../src/core/app-descriptor";
 import { AppGenerator } from "../src/core/app-generator";
+import { GitUser } from "../src/core/config.form";
 import { App } from "../src/app";
 
 const inputs: AppDescriptor = {
     name: "test-app",
     author: {
         name: "test-app author",
-        email: "testapp@gmail.com"
+        email: "testapp@gmail.com",
+        repository: "https://github.com/test-app/test-app.git"
     },
     command: "testApp"
 }
 
 const appDir: string = path.join(path.dirname(__dirname), "tests/test-app");
-describe('Generate', () => {
+describe('RegExp', () => {
+
+    it("should validate command", () => {
+        let re : RegExp = /^[A-Za-z0-9\-_]{3,}$/
+        chai.expect(re.test("")).to.be.false
+        chai.expect(re.test("my-lib")).to.be.true
+        chai.expect(re.test("my_lib")).to.be.true
+        chai.expect(re.test(" my_lib ")).to.be.false
+        chai.expect(re.test("My Lib")).to.be.false
+        chai.expect(re.test("My_Lib")).to.be.true
+        chai.expect(re.test("My4_Lib2")).to.be.true
+
+    })
+})
+describe.skip('Generate', () => {
      
      before(() => {
         if(fs.existsSync(appDir)) {
@@ -57,16 +73,20 @@ describe('Generate', () => {
             fs.existsSync(path.join(appDir, "test", "app.spec.ts"))
         ).to.be.true
     })
-    it('should set process', () => {
-        process.argv.length = 2
-        process.argv[2] = "-u"
-        process.argv[3] = "message"
-        chai.expect(process.argv.length).to.be.equals(4)
+
+    it("should get git user name and email", (done) => {
+        let user: GitUser = new GitUser()
+        user.init((success: boolean) => {
+            chai.expect(success).to.be.true
+            chai.expect(user.name).to.be.equal("raphael_volt")
+            done()
+        })
     })
-    it('should create app', () => {
+
+
+    it("should create App", (done) => {
         let app: App = new App()
-        app.initialize()
-        chai.expect(app.upper).to.be.true
-        chai.expect(app.message).to.be.equals("message")
+        //app.initialize(done)
+        done()
     })
 })

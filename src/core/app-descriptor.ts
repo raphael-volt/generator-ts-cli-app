@@ -1,8 +1,9 @@
 export interface AppDescriptor {
     name: string
-    author: {
+    author?: {
         name: string
         email: string
+        repository: string
     }
     command: string
 }

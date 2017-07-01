@@ -2,7 +2,10 @@
 	"name": "{{name}}",
 	"version": "0.0.1",
 	"description": "",
-	"repository": "",
+	"repository": {
+		"type": "git",
+		"url": "{{{author.repository}}}"
+	},
 	"license": "MIT",
 	"scripts": {
 		"clean": "rimraf dist",

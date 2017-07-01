@@ -1,8 +1,7 @@
 {
-	"name": "ts-cli-app",
+	"name": "generator-ts-cli-app",
 	"version": "0.0.1",
 	"description": "",
-	"repository": "",
 	"license": "MIT",
 	"scripts": {
 		"clean": "rimraf dist",
@@ -14,6 +13,10 @@
 	"author": {
 		"name": "raphael-volt",
 		"email": "raphael.ketmie@gmail.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/raphael-volt/generator-ts-cli-app.git"
 	},
 	"main": "dist/app.js",
 	"typings": "dist/app.d.ts",
@@ -41,6 +44,7 @@
 		"typescript": "^2.2.1"
 	},
 	"dependencies": {
+		"child_process": "^1.0.2",
 		"commander": "^2.9.0",
 		"core-js": "^2.4.1",
 		"fs": "0.0.1-security",

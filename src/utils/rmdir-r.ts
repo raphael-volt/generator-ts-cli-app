@@ -9,8 +9,7 @@ export function mkdirSync(dir: string): void {
         parent = path.dirname(parent)
     }
     while(dirs.length) {
-        let str: string = dirs.shift()
-        fs.mkdirSync(str)
+        fs.mkdirSync(dirs.shift())
     }
 }
 export function rmdirSync(dir: string): void {

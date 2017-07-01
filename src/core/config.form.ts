@@ -13,6 +13,7 @@ colors.setTheme({
     error: 'red'
 })
 export enum ThemeColors {
+    none,
     silly,
     input,
     verbose,
@@ -25,14 +26,17 @@ export enum ThemeColors {
     error
 }
 
-export function log(message: string, color: ThemeColors) {
+export function log(message: string, color: ThemeColors = ThemeColors.none) {
     console.log(logMessage(message, color))
 }
 
 export function logMessage(message: string, color: ThemeColors): string {
-    const prop: string = ThemeColors[color]
-    const fn: (message: string) => string = colors[prop]
-    return fn(message)
+    if (color != ThemeColors.none) {
+        const prop: string = ThemeColors[color]
+        const fn: (message: string) => string = colors[prop]
+        return fn(message)
+    }
+    return message
 }
 export class ConfigForm {
     private _readline: any = require('readline')
@@ -60,7 +64,7 @@ export class ConfigForm {
             })
         }
         let validateName = (value: string) => {
-            const valid: boolean =  /^[a-z0-9\-]{3,}$/.test(value)
+            const valid: boolean = /^[a-z0-9\-]{3,}$/.test(value)
             if (!valid)
                 log("Camel case only, minimum 3 characters", ThemeColors.error)
             return valid

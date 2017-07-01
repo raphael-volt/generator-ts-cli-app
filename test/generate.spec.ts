@@ -24,7 +24,7 @@ const inputs: AppDescriptor = {
 const appDir: string = path.join(path.dirname(__dirname), "tests/test-app");
 describe('RegExp', () => {
 
-    it("should validate command", () => {
+    it("should be a valide name", () => {
         let re: RegExp = /^[A-Za-z0-9\-_]{3,}$/
         chai.expect(re.test("")).to.be.false
         chai.expect(re.test("my-lib")).to.be.true
@@ -33,6 +33,26 @@ describe('RegExp', () => {
         chai.expect(re.test("My Lib")).to.be.false
         chai.expect(re.test("My_Lib")).to.be.true
         chai.expect(re.test("My4_Lib2")).to.be.true
+
+    })
+
+    it("should be a camel-case", () => {
+        let re: RegExp = /^[a-z0-9\-]{3,}$/
+        chai.expect(re.test("")).to.be.false
+        chai.expect(re.test("my-lib")).to.be.true
+        chai.expect(re.test("mylib")).to.be.true
+        chai.expect(re.test("myLib")).to.be.false
+        chai.expect(re.test("my_lib")).to.be.false
+        
+        chai.expect(re.test("my-lib-1")).to.be.true
+        chai.expect(re.test("my-lib-a")).to.be.true
+        chai.expect(re.test("my-lib_a")).to.be.false
+        chai.expect(re.test("my_lib-a")).to.be.false
+        
+        chai.expect(re.test(" my_lib ")).to.be.false
+        chai.expect(re.test("My Lib")).to.be.false
+        chai.expect(re.test("My_Lib")).to.be.false
+        chai.expect(re.test("My4_Lib-2")).to.be.false
 
     })
 })

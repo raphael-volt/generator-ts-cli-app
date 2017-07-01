@@ -60,7 +60,7 @@ export class ConfigForm {
             })
         }
         let validateName = (value: string) => {
-            const valid: boolean = /^[A-Za-z0-9\-]{3,}$/.test(value)
+            const valid: boolean =  /^[a-z0-9\-]{3,}$/.test(value)
             if (!valid)
                 log("Camel case only, minimum 3 characters", ThemeColors.error)
             return valid

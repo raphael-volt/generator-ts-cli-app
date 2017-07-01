@@ -1,7 +1,40 @@
 import { AppDescriptor } from "./app-descriptor";
+const colors = require('colors');
+colors.setTheme({
+    silly: 'rainbow',
+    input: 'grey',
+    verbose: 'cyan',
+    prompt: 'grey',
+    info: 'green',
+    data: 'grey',
+    help: 'cyan',
+    warn: 'yellow',
+    debug: 'blue',
+    error: 'red'
+})
+export enum ThemeColors {
+    silly,
+    input,
+    verbose,
+    prompt,
+    info,
+    data,
+    help,
+    warn,
+    debug,
+    error
+}
 
+export function log(message: string, color: ThemeColors) {
+    console.log(logMessage(message, color))
+}
+
+export function logMessage(message: string, color: ThemeColors): string {
+    const prop: string = ThemeColors[color]
+    const fn: (message: string) => string = colors[prop]
+    return fn(message)
+}
 export class ConfigForm {
-
     private _readline: any = require('readline')
     private user: GitUser = new GitUser()
 
@@ -15,7 +48,7 @@ export class ConfigForm {
             output: process.stdout
         })
         let askCommand = (question: string, callback: (answer: string) => void, validate?: (value: string) => boolean): void => {
-            rl.question(question, (answer: any) => {
+            rl.question(colors.help(question), (answer: any) => {
                 const value: string = String(answer).trim()
                 if (validate !== undefined)
                     if (validate(value))
@@ -27,18 +60,27 @@ export class ConfigForm {
             })
         }
         let validateName = (value: string) => {
-            return /^[A-Za-z0-9\-_]{3,}$/.test(value)
+            const valid: boolean = /^[A-Za-z0-9\-]{3,}$/.test(value)
+            if (!valid)
+                log("Camel case only, minimum 3 characters", ThemeColors.error)
+            return valid
+        }
+        let validateCommand = (value: string) => {
+            const valid: boolean = /^[A-Za-z0-9\-_]{3,}$/.test(value)
+            if (!valid)
+                console.log(colors.error("Minimum 3 characters"))
+            return valid
         }
 
         askCommand("Name : ", (value: string) => {
             config.name = value
             askCommand("Command : ", (value: string) => {
                 config.command = value
-                rl.question(`User name : `, (answer: any) => {
+                askCommand(`User name : `, (answer: string) => {
                     config.author.name = answer
-                    rl.question(`User email : `, (answer: any) => {
+                    askCommand(`User email : `, (answer: string) => {
                         config.author.email = answer
-                        rl.question(`Repository : `, (answer: any) => {
+                        askCommand(`Repository : `, (answer: string) => {
                             config.author.repository = answer
                             rl.close()
                             callback(config)
@@ -49,7 +91,7 @@ export class ConfigForm {
                     rl.write(config.author.email)
                 })
                 rl.write(config.author.name)
-            }, validateName)
+            }, validateCommand)
         }, validateName)
         rl.write(config.name)
     }

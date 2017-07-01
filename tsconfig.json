@@ -1,21 +1,26 @@
 {
 	"compileOnSave": false,
 	"compilerOptions": {
-		"target": "es6",
+
+		"target": "es5",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "removeComments": false,
+        "noImplicitAny": false,
 		"declaration": false,
 		"module": "commonjs",
 		"sourceMap": true,
 		"moduleResolution": "node",
-		"noImplicitAny": true,
 		"outDir": "dist",
 		"preserveConstEnums": true,
-		"removeComments": true,
-		"typeRoots": [
-			"node_modules/*"
-		],
 		"lib": [
 			"es2016",
 			"dom"
+		],
+		"baseUrl": "./",
+		"typeRoots": [
+			"node_modules/@types",
+			"node_modules"
 		],
 		"types": [
 			"commander",
@@ -26,6 +31,7 @@
 		]
 	},
 	"include": [
-		"src/**/*"
+		"src/**/*",
+		"node_modules/@types"
 	]
 }

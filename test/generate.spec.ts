@@ -4,13 +4,13 @@ import * as sinon from 'sinon';
 import * as mocha from 'mocha';
 import * as fs from 'fs';
 import * as path from 'path';
-
 import * as dirUtil from "../src/utils/rmdir-r";
 import { AppDescriptor } from "../src/core/app-descriptor";
 import { AppGenerator } from "../src/core/app-generator";
 import { GitUser } from "../src/core/config.form";
 import { App } from "../src/app";
 
+const intercept = require("intercept-stdout");
 const inputs: AppDescriptor = {
     name: "test-app",
     author: {
@@ -25,7 +25,7 @@ const appDir: string = path.join(path.dirname(__dirname), "tests/test-app");
 describe('RegExp', () => {
 
     it("should validate command", () => {
-        let re : RegExp = /^[A-Za-z0-9\-_]{3,}$/
+        let re: RegExp = /^[A-Za-z0-9\-_]{3,}$/
         chai.expect(re.test("")).to.be.false
         chai.expect(re.test("my-lib")).to.be.true
         chai.expect(re.test("my_lib")).to.be.true
@@ -36,16 +36,49 @@ describe('RegExp', () => {
 
     })
 })
+describe('WatchOutput', () => {
+    let app: App
+    it('should set process.argv', () => {
+        process.argv.length = 2
+        process.argv[2] = "-u"
+        process.argv[3] = "message"
+        chai.expect(process.argv.length).to.be.equals(4)
+    })
+    it('should create app', () => {
+        app = new App(true)
+        chai.expect(app.message).to.be.undefined
+    })
+        it('should watch message', () => {
+        let unhook_intercept: any;
+        let outputs: string[] = []
+        unhook_intercept = intercept((text: string) => {
+            outputs.push(text.trim())
+        })
+        app.initialize()
+        unhook_intercept()
+
+        chai.expect(outputs.length).to.be.greaterThan(0)
+        let found: boolean = false
+        let message: string = app.upper ? app.message.toUpperCase() : app.message
+        let i: number = -1
+        for(let str of outputs) {
+            i = str.search(message)
+            if(i != -1)
+                break
+        }
+        chai.expect(i).not.to.be.equals(-1)
+    })
+})
 describe.skip('Generate', () => {
-     
-     before(() => {
-        if(fs.existsSync(appDir)) {
+
+    before(() => {
+        if (fs.existsSync(appDir)) {
             dirUtil.rmdirSync(appDir)
         }
-     })
-    
+    })
+
     after(() => {
-        if(fs.existsSync(appDir)) {
+        if (fs.existsSync(appDir)) {
             //dirUtil.rmdirSync(appDir)
         }
     })

@@ -19,12 +19,17 @@ export class BusyMessage {
         }
     }
 
+    close(message: string = "") {
+        this.clear()
+        this.write(this.message + " " + message)
+        this.stop()
+    }
+
     stop() {
         if (this.timer !== undefined) {
             clearInterval(this.timer)
             this.timer = undefined
             this.index = 0
-            this.output()
             process.stdout.write(os.EOL)
         }
     }
@@ -41,6 +46,10 @@ export class BusyMessage {
 
     private output(): void {
         this.clear()
-        process.stdout.write(`${this.message} ${this.chars[this.index]}`)
+        this.write(`${this.message} ${this.chars[this.index]}`)
+    }
+
+    private write(message: string) {
+        process.stdout.write(message)
     }
 }

@@ -3,9 +3,11 @@ import { AppDescriptor } from "./core/app-descriptor";
 import { AppGenerator } from "./core/app-generator";
 import { ConfigForm, log, ThemeColors, logMessage } from "./core/config.form";
 import { BusyMessage } from "./core/busy-message";
+import { rmdirSync } from "./utils/rmdir-r";
 import * as path from "path";
 
 import * as child_process from 'child_process'
+var os = require("os");
 
 export class App {
 
@@ -62,6 +64,7 @@ export class App {
     }
 
     private updateNodeModules() {
+        rmdirSync(path.join(this.appDir, "node_modules"))
         this.exec("npm install", this.buildApp, this.buildComplete)
     }
 
@@ -85,10 +88,11 @@ export class App {
             logMessage(`> ${command}`, ThemeColors.warn)
         )
         child_process.exec(command, (err: Error, strOut: string, stdErr: string) => {
-            this.busyMessage.stop()
+            let message :string = err ? 
+                logMessage("[ERROR]", ThemeColors.error) :
+                logMessage("[DONE]", ThemeColors.info)
+            this.busyMessage.close(message)
             if (err) {
-                log(command, ThemeColors.warn)
-                log(err.message, ThemeColors.error)
                 return error()
             }
             log(strOut, ThemeColors.prompt)

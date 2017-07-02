@@ -15,41 +15,43 @@ export class AppGenerator {
         let dst: string
         let f: string
 
+        const tplExt: string = ".tpl"
+
         f = "main.ts"
-        src = path.join(tplDir, f)
+        src = path.join(tplDir, f + tplExt)
         dst = path.join(dir, "src", f)
         this.copy(src, dst)
-        
+
 
         f = "app.ts"
-        src = path.join(tplDir, f)
+        src = path.join(tplDir, f + tplExt)
         dst = path.join(dir, "src", f)
         this.copy(src, dst)
-        
+
         f = "tsconfig.json"
 
-        src = path.join(tplDir, f)
+        src = path.join(tplDir, f + tplExt)
         dst = path.join(dir, f)
         this.copy(src, dst)
-        
+
         f = "cmd"
-        src = path.join(tplDir, f)
+        src = path.join(tplDir, f + tplExt)
         dst = path.join(dir, "bin", descriptor.command)
         this.copy(src, dst)
 
         f = "app.spec.ts"
-        src = path.join(tplDir, f)
+        src = path.join(tplDir, f + tplExt)
         dst = path.join(dir, "test", f)
 
         this.copy(src, dst)
 
         f = "nodemon.json"
-        src = path.join(tplDir, f)
+        src = path.join(tplDir, f + tplExt)
         dst = path.join(dir, f)
         this.copy(src, dst)
 
         f = "package.json"
-        src = path.join(tplDir, f)
+        src = path.join(tplDir, f + tplExt)
         dst = path.join(dir, f)
         this.template(src, dst, descriptor)
     }
@@ -57,7 +59,7 @@ export class AppGenerator {
     private copy(src: string, dst: string) {
         fs.writeFileSync(dst, fs.readFileSync(src))
     }
-    
+
     private template(src: string, dst: string, templateData: any) {
         fs.writeFileSync(dst, mustache.render(fs.readFileSync(src).toString(), templateData))
     }
@@ -68,6 +70,6 @@ export class AppGenerator {
         mkdirSync(path.join(dir, "test"))
         mkdirSync(path.join(dir, "src"))
         mkdirSync(path.join(dir, "bin"))
-        
+
     }
 }

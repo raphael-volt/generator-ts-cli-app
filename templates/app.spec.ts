@@ -1,7 +1,7 @@
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import * as mocha from 'mocha';
-const intercept = require("intercept-stdout");
+import * as intercept from 'intercept-stdout';
 
 import { App } from "../src/app";
 

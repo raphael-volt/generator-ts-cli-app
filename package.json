@@ -1,6 +1,6 @@
 {
 	"name": "generator-ts-cli-app",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "",
 	"license": "MIT",
 	"scripts": {
@@ -25,9 +25,10 @@
 	},
 	"files": [
 		"bin",
-		"dist"
+		"dist",
+		"templates"
 	],
-	"devDependencies": {},
+	"devDependencies": { },
 	"dependencies": {
 		"@types/chai": "^4.0.0",
 		"@types/commander": "^2.3.31",
@@ -51,6 +52,6 @@
 		"rxjs": "^5.4.1",
 		"sinon": "^2.3.2",
 		"ts-node": "^3.0.4",
-		"typescript": "^2.2.1"
+		"typescript": "^2.4.1"
 	}
 }

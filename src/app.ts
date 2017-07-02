@@ -27,7 +27,7 @@ export class App {
 
     public initialize(callback?: () => void) {
         this.commander
-            .version('1.0.6')
+            .version('1.0.7')
             .description('Basic cli tools.')
             .option('-u, --upper', 'Output message to upper case.')
         this.callback = callback

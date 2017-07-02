@@ -1,6 +1,9 @@
-var readline = require('readline');
-var os = require("os");
+import * as readline from "readline";
+import * as os from "os";
 
+export interface WStream {
+    write:(text) => void
+}
 export class BusyMessage {
 
     public chars: string[] = ["", ".", "..", "..."]
@@ -9,14 +12,20 @@ export class BusyMessage {
     private index: number = 0
     private length: number = 0
     private message: string
+
+    socket:any
+    private getSocket(): WStream {
+        return this.socket || process.stdout
+    }
+
     start(message, timeout: number = 300) {
+        
         this.index = 0
         this.length = this.chars.length
         this.message = message
-        if(this.timer == undefined) {
-            this.output()
+        this.output()
+        if(this.timer == undefined)
             this.timer = setInterval(this.update, timeout)
-        }
     }
 
     close(message: string = "") {
@@ -30,13 +39,14 @@ export class BusyMessage {
             clearInterval(this.timer)
             this.timer = undefined
             this.index = 0
-            process.stdout.write(os.EOL)
+            this.write(os.EOL)
         }
     }
 
     private clear() {
-        readline.cursorTo(process.stdout, 0)
-        readline.clearLine(process.stdout, 1)
+        const stdout: any = this.getSocket()
+        readline.cursorTo(stdout, 0, undefined)
+        readline.clearLine(stdout, 1)
     }
 
     private update = () => {
@@ -50,6 +60,6 @@ export class BusyMessage {
     }
 
     private write(message: string) {
-        process.stdout.write(message)
+        this.getSocket().write(message)
     }
 }

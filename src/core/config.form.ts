@@ -1,5 +1,5 @@
 import { AppDescriptor } from "./app-descriptor";
-const colors = require('colors');
+import * as colors from 'colors'
 colors.setTheme({
     silly: 'rainbow',
     input: 'grey',

@@ -16,43 +16,24 @@ export class App {
 
     private appDir: string
 
-    private callback: () => void | undefined = undefined
-
-    constructor(
-        private readonly debug?: boolean
-    ) {
+    constructor() {
         this.commander = commander
         this.npmCommands = new NPMCommands()
     }
 
-    public initialize(callback?: () => void) {
+    public initialize() {
         this.commander
             .version('1.0.7')
             .description('Basic cli tools.')
             .option('-u, --upper', 'Output message to upper case.')
-        this.callback = callback
+
         this.commander.parse(process.argv)
         this.appDir = process.cwd()
         this.config.name = path.basename(this.appDir)
-        if (this.debug) {
-            this.message = commander.args[0]
-            this.upper = commander.upper || false
-            this.config.author = {
-                name: "debug-user",
-                email: "debug-user@gmail.com",
-                repository: `https://github.com/debug-user/${this.config.name}.git`
-            }
-            this.config.command = this.config.name.replace("-", "")
-            console.log(this.commander.upper ?
-                this.message.toUpperCase()
-                : this.message)
-        }
-        else
-            this.createInterface()
+        
+        this.createInterface()
     }
 
-    message: string
-    upper: boolean
     private createInterface() {
         let form: ConfigForm = new ConfigForm()
         form.createInterface(this.config, this.generateApp)
@@ -82,11 +63,9 @@ export class App {
     }
 
     private buildComplete = (success: boolean) => {
-        if (success) 
+        if (success)
             log("Installation complete", ThemeColors.info)
-        
-        if (this.callback !== undefined)
-            this.callback()
+
         process.exit(success ? 0 : 1)
     }
 }

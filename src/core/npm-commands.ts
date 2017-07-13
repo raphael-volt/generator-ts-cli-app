@@ -1,7 +1,7 @@
 import * as path from "path"
 import * as child_process from 'child_process'
 import * as readline from 'readline'
-import * as fs from 'fs'
+import * as fs from 'fs-extra'
 import * as os from 'os'
 import { rmdirSync } from "../utils/rmdir-r"
 import { log, ThemeColors, logMessage } from "./config.form";

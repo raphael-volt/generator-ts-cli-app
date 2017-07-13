@@ -2,7 +2,7 @@ require("./rmdir.spec.ts")
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import * as mocha from 'mocha';
-import * as fs from 'fs';
+import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as dirUtil from "../src/utils/rmdir-r";
 import { AppDescriptor } from "../src/core/app-descriptor";
@@ -11,7 +11,6 @@ import { NPMCommands } from '../src/core/npm-commands'
 import { GitUser } from "../src/core/config.form";
 import { App } from "../src/app";
 
-const intercept = require("intercept-stdout");
 const inputs: AppDescriptor = {
     name: "test-app",
     author: {
@@ -23,7 +22,7 @@ const inputs: AppDescriptor = {
 }
 
 const appDir: string = path.join(path.dirname(__dirname), "tests/test-app");
-describe('RegExp', () => {
+describe.skip('RegExp', () => {
 
     it("should be a valide name", () => {
         let re: RegExp = /^[A-Za-z0-9\-_]{3,}$/
@@ -57,46 +56,14 @@ describe('RegExp', () => {
 
     })
 })
-describe('WatchOutput', () => {
-    let app: App
-    it('should set process.argv', () => {
-        process.argv.length = 2
-        process.argv[2] = "-u"
-        process.argv[3] = "message"
-        chai.expect(process.argv.length).to.be.equals(4)
-    })
-    it('should create app', () => {
-        app = new App(true)
-        chai.expect(app.message).to.be.undefined
-    })
-    it('should watch message', () => {
-        let unhook_intercept: any;
-        let outputs: string[] = []
-        unhook_intercept = intercept((text: string) => {
-            outputs.push(text.trim())
-        })
-        app.initialize()
-        unhook_intercept()
 
-        chai.expect(outputs.length).to.be.greaterThan(0)
-        let found: boolean = false
-        let message: string = app.upper ? app.message.toUpperCase() : app.message
-        let i: number = -1
-        for (let str of outputs) {
-            i = str.search(message)
-            if (i != -1)
-                break
-        }
-        chai.expect(i).not.to.be.equals(-1)
-    })
-})
 describe('Generate', () => {
 
-    let npmCommands: NPMCommands = new NPMCommands()
+    let npmCommands: NPMCommands = new NPMCommands()    
 
     after(() => {
         if (fs.existsSync(appDir)) {
-            //dirUtil.rmdirSync(appDir)
+            dirUtil.rmdirSync(appDir)
         }
     })
 
@@ -111,7 +78,8 @@ describe('Generate', () => {
         let user: GitUser = new GitUser()
         user.init((success: boolean) => {
             chai.expect(success).to.be.true
-            chai.expect(user.name).to.be.equal("raphael_volt")
+            chai.expect(user.name).to.be.equal("raphael-volt")
+            chai.expect(user.email).to.be.equal("raphael@ketmie.com")
             user.setProject(inputs.name)
             inputs.author = user
             done()
@@ -148,7 +116,7 @@ describe('Generate', () => {
         chai.expect(npmCommands.setProjectDir(appDir)).to.be.true
     })
 
-    it("should install app dependencies", function(done) {
+    it.skip("should install app dependencies", function(done) {
         this.timeout(30000)
         npmCommands.install().subscribe(success => {
             chai.expect(success).to.be.true
@@ -158,7 +126,7 @@ describe('Generate', () => {
         )
     })
 
-    it("should build app", function(done) {
+    it.skip("should build app", function(done) {
         this.timeout(10000)
         npmCommands.build().subscribe(success => {
             chai.expect(success).to.be.true
@@ -168,7 +136,7 @@ describe('Generate', () => {
         )
     })
 
-    it("should test the App", function(done) {
+    it.skip("should test the App", function(done) {
         this.timeout(10000)
         npmCommands.test().subscribe(success => {
             done()

@@ -1,12 +1,12 @@
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import * as mocha from 'mocha';
-import * as fs from 'fs';
+import * as fs from 'fs-extra';
 import * as path from 'path';
 
 import * as du from "../src/utils/rmdir-r";
 const tests: string = "tests-rmdir"
-describe('rmdir', () => {
+describe.skip('rmdir', () => {
     const d: string = path.dirname(__dirname)
 
     let dirs: string[] = [

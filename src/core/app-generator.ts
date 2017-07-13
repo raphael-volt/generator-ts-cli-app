@@ -1,11 +1,15 @@
 import { mkdirSync } from "../utils/rmdir-r";
 import { AppDescriptor } from "./app-descriptor";
-import * as fs from 'fs'
+import * as fs from 'fs-extra'
 import * as path from 'path'
 import * as mustache from "mustache";
 
 export class AppGenerator {
 
+    update(dir: string): void{
+
+    }
+    
     build(descriptor: AppDescriptor, dir: string): void {
         this.createDirs(dir)
         const tplDir: string = path.join(

@@ -5,21 +5,29 @@ import {
 } from "./filenames";
 import * as fs from 'fs-extra'
 import * as path from 'path'
-import * as mustache from "mustache";
-import { Observable, Observer } from "rxjs";
+import * as mustache from "mustache"
 
 const tplDir: string = path.join(
     path.dirname(path.dirname(__dirname)),
     "templates")
+
 const TPL_EXT: string = ".tpl"
+const SRC: string = "src"
+const BIN: string = "bin"
+const TEST: string = "test"
+const CMD: string = "cmd"
+
+const FILES: [string, string[]][] = [
+    ["main.ts", [SRC]],
+    ["app.ts", [SRC]],
+    ["app.spec.ts", [TEST]],
+    ["tsconfig.json", []],
+    ["nodemon.json", []]
+]
 
 export class AppGenerator {
 
     private cwd: string
-    update(dir: string): Observable<any> {
-        this.cwd = dir
-        return Observable.create(this._update)
-    }
 
     private local = (...args): string => {
         return path.join.apply(null, [this.cwd].concat(args))
@@ -29,87 +37,210 @@ export class AppGenerator {
         return path.join.apply(null, [tplDir].concat(args))
     }
 
-    private _update = (observer: Observer<any>) => {
-        const local = this.local
-        const errorFn = error => observer.error(error)
-        const nextFn = pkg => {
-            observer.next(pkg)
-            observer.complete()
-        }
+    private _depsChanged: boolean
+    get dependenciesChanged(): boolean {
+        return this._depsChanged
+    }
 
-        fs.readJSON(local(PACKAGE_JSON))
+    private _update = (nextFn: (pkg: PackageJSON) => void, errorFn: (error?: any) => void, override: boolean) => {
+        const local = this.local
+        this._depsChanged = false
+        const pkgSrc: string = local(PACKAGE_JSON)
+        fs.readJSON(pkgSrc)
             .then(pkg => {
                 fs.readJSON(this.template(PACKAGE_JSON + TPL_EXT))
-                .then((tpl: PackageJSON) => {
-                    const depsChange: boolean = dependenciesDif(pkg, tpl)
-                    
-                })
-                nextFn(pkg)
+                    .then((tpl: PackageJSON) => {
+                        // is npm install required
+                        this._depsChanged = dependenciesDif(pkg, tpl)
+                        this.copyFiles(override).then(files => {
+                            this.createCommands(pkg)
+                                .then(success => {
+                                    if (!this._depsChanged)
+                                        nextFn(pkg)
+                                    else
+                                        fs.writeJSON(pkgSrc, pkg).then(() => nextFn(pkg)).catch(errorFn)
+                                }).catch(errorFn)
+                        }).catch(errorFn)
+                    }).catch(errorFn)
             }).catch(errorFn)
     }
 
-    build(descriptor: AppDescriptor, dir: string): void {
-        this.createDirs(dir)
+    private copyFiles(override: boolean = true): Promise<string[]> {
+        return new Promise((nextFn: (files: string[]) => void, errorFn: (error?: any) => void) => {
 
-        let src: string
-        let dst: string
-        let f: string
-
-        const tplExt: string = ".tpl"
-
-        f = "main.ts"
-        src = path.join(tplDir, f + tplExt)
-        dst = path.join(dir, "src", f)
-        this.copy(src, dst)
-
-
-        f = "app.ts"
-        src = path.join(tplDir, f + tplExt)
-        dst = path.join(dir, "src", f)
-        this.copy(src, dst)
-
-        f = "tsconfig.json"
-
-        src = path.join(tplDir, f + tplExt)
-        dst = path.join(dir, f)
-        this.copy(src, dst)
-
-        f = "cmd"
-        src = path.join(tplDir, f + tplExt)
-        dst = path.join(dir, "bin", descriptor.command)
-        this.copy(src, dst)
-
-        f = "app.spec.ts"
-        src = path.join(tplDir, f + tplExt)
-        dst = path.join(dir, "test", f)
-
-        this.copy(src, dst)
-
-        f = "nodemon.json"
-        src = path.join(tplDir, f + tplExt)
-        dst = path.join(dir, f)
-        this.copy(src, dst)
-
-        f = "package.json"
-        src = path.join(tplDir, f + tplExt)
-        dst = path.join(dir, f)
-        this.saveTemplate(src, dst, descriptor)
+            let i: number = 0
+            const n: number = FILES.length
+            const files: string[] = []
+            let copy = (src: string, dst: string) => {
+                fs.copy(src, dst).then(() => {
+                    files.push(path.relative(this.cwd, dst))
+                    i++
+                    nextFile()
+                }).catch(errorFn)
+            }
+            let nextFile = () => {
+                let src: string
+                let dst: string
+                if (i < n) {
+                    src = this.template(FILES[i][0] + TPL_EXT)
+                    dst = this.local.apply(null, FILES[i][1].concat(FILES[i][0]))
+                    if (!override) {
+                        fs.pathExists(dst).then(exists => {
+                            if (!exists)
+                                copy(src, dst)
+                            else {
+                                i++
+                                nextFile()
+                            }
+                        }).catch(errorFn)
+                    }
+                    else
+                        copy(src, dst)
+                }
+                else
+                    nextFn(files)
+            }
+            nextFile()
+        })
+    }
+    update(dir: string, override: boolean = false): Promise<PackageJSON> {
+        this.cwd = dir
+        return new Promise((resolve, reject) => {
+            this._update(resolve, reject, override)
+        })
     }
 
-    private copy(src: string, dst: string) {
-        fs.writeFileSync(dst, fs.readFileSync(src))
+    build(descriptor: AppDescriptor, dir: string): Promise<PackageJSON> {
+        return new Promise((resolve, reject) => {
+            this.cwd = dir
+            const src: string = this.template(PACKAGE_JSON + TPL_EXT)
+            const dst: string = this.local(PACKAGE_JSON)
+            // create directories
+            this.createDirs(dir).then(success => {
+                // create package.json
+                fs.readFile(src).then((data: Buffer) => {
+                    const pkg: PackageJSON = JSON.parse(mustache.render(data.toString(), descriptor))
+                    // save package.json
+                    fs.writeJson(dst, pkg).then(() => {
+                        // create commands
+                        this.createCommands(pkg).then(success => {
+                            // create files
+                            this.copyFiles().then(files => {
+                                resolve(pkg)
+                            }).catch(reject)
+                        }).catch(reject)
+                    }).catch(reject)
+                }).catch(reject)
+            }).catch(reject)
+        })
     }
 
-    private saveTemplate(src: string, dst: string, templateData: any) {
-        fs.writeFileSync(dst, mustache.render(fs.readFileSync(src).toString(), templateData))
+    updateSync = (dir: string, override: boolean = false) => {
+        const local = this.local
+        this.cwd = dir
+        this._depsChanged = false
+        const pkgSrc: string = local(PACKAGE_JSON)
+        let pkg: PackageJSON = fs.readJSONSync(pkgSrc)
+        let tpl: PackageJSON = fs.readJSONSync(this.template(PACKAGE_JSON + TPL_EXT))
+        this._depsChanged = dependenciesDif(pkg, tpl)
+        // create files
+        for (const f of FILES) {
+            let src = this.template(f[0] + TPL_EXT)
+            let dst = this.local.apply(null, f[1].concat(f[0]))
+            if (!override)
+                if (fs.existsSync(dst))
+                    continue
+            fs.copySync(src, dst)
+        }
+        this.createCommandsSync(pkg)
+        if (this._depsChanged)
+            fs.writeJsonSync(pkgSrc, pkg)
+    }
+
+    buildSync(descriptor: AppDescriptor, dir: string): void {
+        this.cwd = dir
+        // create directories
+        this.createDirsSync(dir)
+
+        let src: string = this.template(PACKAGE_JSON + TPL_EXT)
+        let dst: string = this.local(PACKAGE_JSON)
+        // create package.json
+        const pkg = JSON.parse(
+            mustache.render(
+                fs.readFileSync(src).toString(),
+                descriptor)
+        )
+        fs.writeJSONSync(dst, pkg)
+        // create commands
+        this.createCommandsSync(pkg)
+        // create files
+        for (const f of FILES) {
+            src = this.template(f[0] + TPL_EXT)
+            dst = this.local.apply(null, f[1].concat(f[0]))
+            fs.copySync(src, dst)
+        }
+    }
+
+    private createCommands(pkg: PackageJSON, clear: boolean = true): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            const src: string = this.template(CMD)
+            const commands: string[] = []
+            for (const cmd in pkg.bin)
+                commands.push(this.local(BIN, cmd))
+            let nextCommand = () => {
+                if (commands.length)
+                    fs.copy(src, commands.shift()).then(nextCommand).catch(resolve)
+                else
+                    resolve(true)
+            }
+            if (clear) {
+                let dir: string = this.local(BIN)
+                fs.emptyDir(dir).then(() => {
+                    nextCommand()
+                }).catch(reject)
+            }
+            else
+                nextCommand()
+        })
     }
 
 
-    private createDirs(dir: string): void {
-        mkdirSync(dir)
-        mkdirSync(path.join(dir, "test"))
-        mkdirSync(path.join(dir, "src"))
-        mkdirSync(path.join(dir, "bin"))
+    private createCommandsSync(pkg: PackageJSON) {
+        const cmdContent: Buffer = fs.readFileSync(this.template(CMD) + TPL_EXT)
+        for (const cmd in pkg.bin) {
+            fs.writeFileSync(
+                this.local(BIN, cmd),
+                cmdContent
+            )
+        }
+    }
+
+    private createDirs(dir: string): Promise<boolean> {
+        return new Promise((resolve: (success: boolean) => void, error: (error?: any) => void) => {
+            const dirs: string[] = [
+                dir,
+                path.join(dir, TEST),
+                path.join(dir, SRC),
+                path.join(dir, BIN)
+            ]
+            let next = () => {
+                if (dirs.length)
+                    fs.mkdirp(dirs.shift()).then(next).catch(error)
+                else
+                    resolve(true)
+            }
+            next()
+        })
+    }
+
+    private createDirsSync(dir: string): void {
+        for (const d of [
+            dir,
+            path.join(dir, TEST),
+            path.join(dir, SRC),
+            path.join(dir, BIN)
+        ])
+            mkdirSync(d)
 
     }
 }
@@ -124,6 +255,9 @@ export interface PackageJSON {
         url?: string
     }
     scripts?: {
+        [name: string]: string
+    },
+    bin?: {
         [name: string]: string
     }
     author?: {

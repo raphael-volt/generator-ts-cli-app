@@ -27,7 +27,6 @@
 		"bin",
 		"dist"
 	],
-	"devDependencies": { },
 	"devDependencies": {
 		"@types/chai": "^4.0.1",
 		"@types/commander": "^2.3.31",

@@ -1,58 +1,33 @@
-import * as fs from 'fs';
-import * as path from 'path';
-export function mkdirSync(dir: string): void {
+import * as fs from 'fs-extra';
 
-    let dirs: string[] = []
-    let parent: string = dir
-    while(! fs.existsSync(parent)) {
-        dirs.unshift(parent)
-        parent = path.dirname(parent)
-    }
-    while(dirs.length) {
-        fs.mkdirSync(dirs.shift())
-    }
+export const mkdirSync = (dir: string): void => {
+    if(! fs.existsSync(dir)) 
+        fs.mkdirpSync(dir)
 }
-export function rmdirSync(dir: string): void {
-    if (!fs.existsSync(dir)) {
-        return;
-    }
-    let currentDirToRead: string
-    let directoriesFound: string[]
-    let nextDirToReadIndex: number
-    let stat: { isDirectory: () => boolean }
-    let p: string
 
-    currentDirToRead = dir;
-    directoriesFound = [dir]
-    while (true) {
-        fs.readdirSync(currentDirToRead).forEach((name: string) => {
-            p = path.join(currentDirToRead, name)
-            stat = fs.lstatSync(p)
-            if (stat.isDirectory())
-                directoriesFound.push(p)
-            else
-                fs.unlinkSync(p)
-        })
-        nextDirToReadIndex = directoriesFound.indexOf(currentDirToRead) + 1
-        if (nextDirToReadIndex >= directoriesFound.length) {
-            break
-        }
-        currentDirToRead = directoriesFound[nextDirToReadIndex]
-    }
-
-    directoriesFound.reverse()
-    directoriesFound.forEach((path: string) => {
-        fs.rmdirSync(path)
+export const mkdir = (dir: string, callback: (error?: any) => void): void => {
+    fs.exists(dir, exists => {
+        if(! exists)
+            fs.mkdirp(dir).then(callback).catch(callback)
+        else
+            callback()
     })
 }
-/*~ This example shows how to have multiple overloads for your function */
-// declare function rmdirSync(name: string): void
 
-/*~ If you want to expose types from your module as well, you can
- *~ place them in this block. Often you will want to describe the
- *~ shape of the return type of the function; that type should
- *~ be declared in here, as this example shows.
-declare namespace rmdirSync {
 
+export const rmdirSync = (dir: string, options: any = {}): boolean => {
+    if(fs.existsSync(dir)) {
+        fs.removeSync(dir)
+        return true
+    }
+    return false
 }
- */
+
+export const rmdir = (dir: string, callback: (error?: any) => void, options: any = {}): void => {
+    fs.exists(dir, exists => {
+        if(exists)
+            fs.remove(dir).then(callback).catch(callback)
+        else
+            callback()
+    })
+}

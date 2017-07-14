@@ -1,7 +1,7 @@
 import * as path from "path"
 import * as child_process from 'child_process'
 import * as readline from 'readline'
-import * as fs from 'fs'
+import * as fs from 'fs-extra'
 import * as os from 'os'
 import { rmdirSync } from "../utils/rmdir-r"
 import { log, ThemeColors, logMessage } from "./config.form";
@@ -67,11 +67,36 @@ export class NPMCommands {
         return this.getObservableError("Missing " + PACKAGE_JSON)
     }
 
-    install(): Observable<boolean> {
+    _install(clear: boolean = false): Promise<boolean> { 
+        return new Promise((resolve, reject) => {
+
+        })
+    }
+    install(clear: boolean = false): Observable<boolean> {
         if (!this.package)
             return this.getMissingPackageObservabe()
-
-        return this.exec("npm install")
+        return Observable.create((observer: Observer<boolean>) => {
+            const done = () => {
+                const sub = this.exec("npm install").subscribe(
+                    success => {
+                        subDone()
+                        observer.next(true)
+                        observer.complete()
+                    },
+                    error => {
+                        subDone()
+                        observer.error(error)
+                    }
+                )
+                const subDone = () => {
+                    sub.unsubscribe()
+                }
+            }
+            if (clear)
+                fs.emptyDir(path.join(this.cwd, NODE_MODULES)).then(done).catch(observer.error)
+            else
+                done()
+        })
     }
 
     test(): Observable<boolean> {
@@ -97,16 +122,15 @@ export class NPMCommands {
     private exec(command: string): Observable<boolean> {
         return Observable.create((observer: Observer<boolean>) => {
             this.busyMessage.start(
-                logMessage(`> ${command}`, ThemeColors.warn)
+                logMessage(logMessage(`> ${command}`, ThemeColors.debug), ThemeColors.bold)
             )
             let child: child_process.ChildProcess = child_process.exec(command, (err: Error, strOut: string, stdErr: string) => {
                 let message: string = err ?
                     logMessage("[ERROR]", ThemeColors.error) :
-                    logMessage("[DONE]", ThemeColors.info)
-                this.busyMessage.close(message)
-                if (err) {
+                    logMessage(`✓`, ThemeColors.info)
+                this.busyMessage.close(logMessage(message, ThemeColors.bold))
+                if (err) 
                     return observer.error(err)
-                }
                 log(strOut, ThemeColors.prompt)
                 observer.next(true)
                 observer.complete()

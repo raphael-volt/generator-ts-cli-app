@@ -12,10 +12,13 @@ npm install -g generator-ts-cli-app
   
   Commands:
 
-    new [directory]
+    new [directory]     Create a cli TypeScript application.
     n [directory]
-    update [directory]
+    update [directory]  Update an existing cli application.
     u [directory]
+    spec <file>         Generate a chai test-case. Add spec.ts extension if missing.
+    s <file>
+    help [cmd]          display help for [cmd]
 
   CLI TypeScript application generator.
 
@@ -23,8 +26,9 @@ npm install -g generator-ts-cli-app
 
     -h, --help         output usage information
     -V, --version      output the version number
-    -o, --override     Always replace existing content (update command only)
-    -s, --skipscripts  Exit without run build and test
+    -o, --override     Always replace existing content (update command only).
+    -s, --skipscripts  Exit without run build and test.
+    
 ```
 
 ## Scripts

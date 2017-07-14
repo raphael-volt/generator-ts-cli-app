@@ -51,23 +51,26 @@ export class App {
             .version(pkg.version)
             .description('CLI TypeScript application generator.')
             .option(
-            '-o, --override', 'Always replace existing content (update command only)',
+            '-o, --override', 'Always replace existing content (update command only).',
             () => this.override = true)
             .option(
-            '-s, --skipscripts', 'Exit without run build and test',
+            '-s, --skipscripts', 'Exit without run build and test.',
             () => this.skipScripts = true)
 
-        this.commander.command("new [directory]")
+        this.commander.command("new [directory]",
+                "Create a cli TypeScript application.")
             .action(this.createApp)
         this.commander.command("n [directory]")
             .action(this.createApp)
 
-        this.commander.command("update [directory]")
+        this.commander.command("update [directory]",
+                "Update an existing cli application.")
             .action(this.updateApp)
         this.commander.command("u [directory]")
             .action(this.updateApp)
 
-        this.commander.command("spec <file>")
+        this.commander.command("spec <file>", 
+                "Generate a chai test-case. Add spec.ts extension if missing.")
             .action(this.createSpec)
         this.commander.command("s <file>")
             .action(this.createSpec)

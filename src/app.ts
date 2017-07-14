@@ -80,7 +80,6 @@ export class App {
         const dir: string = path.dirname(this.explicitPath)
         let basename: string = path.basename(this.explicitPath)
         const ext: string = path.extname(basename)
-        console.log("ext", ext)
         switch(true) {
             case /.spec.ts$/.test(basename): 
                 break

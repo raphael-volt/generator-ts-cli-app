@@ -1,8 +1,19 @@
 import * as fs from 'fs-extra';
 
 export const mkdirSync = (dir: string): void => {
-    fs.mkdirpSync(dir)
+    if(! fs.existsSync(dir)) 
+        fs.mkdirpSync(dir)
 }
+
+export const mkdir = (dir: string, callback: (error?: any) => void): void => {
+    fs.exists(dir, exists => {
+        if(! exists)
+            fs.mkdirp(dir).then(callback).catch(callback)
+        else
+            callback()
+    })
+}
+
 
 export const rmdirSync = (dir: string, options: any = {}): boolean => {
     if(fs.existsSync(dir)) {

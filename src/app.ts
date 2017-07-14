@@ -67,7 +67,69 @@ export class App {
         this.commander.command("u [directory]")
             .action(this.updateApp)
 
+        this.commander.command("spec <file>")
+            .action(this.createSpec)
+        this.commander.command("s <file>")
+            .action(this.createSpec)
+
         this.commander.parse(process.argv)
+    }
+
+    private createSpec = (...args) => {
+        this.parseArgs(args)
+        const dir: string = path.dirname(this.explicitPath)
+        let basename: string = path.basename(this.explicitPath)
+        const ext: string = path.extname(basename)
+        console.log("ext", ext)
+        switch(true) {
+            case /.spec.ts$/.test(basename): 
+                break
+                
+            case /.ts$/.test(basename): 
+                basename = basename.slice(0, -3)
+
+            case ext == "":
+                basename += ".spec.ts"
+                break
+        }
+        this.explicitPath = path.join(dir, basename)
+        const done = () => {
+            this.generateSpec(basename)
+        } 
+        fs.pathExists(dir).then(exists => {
+            if(! exists)
+                fs.mkdirp(dir).then(done)
+            else
+                done()
+        }).catch(this.errorHandler)
+    }
+
+    generateSpec(filename: string) {
+        const tpl: string = `import * as chai from 'chai';
+import * as sinon from 'sinon';
+import * as mocha from 'mocha';
+
+const expect = (target: any, message?: string): Chai.Assertion => {
+    return chai.expect(target, message)
+}
+
+const expectBe = (target: any, message?: string): Chai.Assertion => {
+    return expect(target, message).to.be
+}
+
+const expectNot = (target: any, message?: string): Chai.Assertion => {
+    return expect(target, message).not.to.be
+}
+
+describe('${filename}', () => {
+    it("should be true", () => {
+        expectBe(true).true
+    })
+})`
+        fs.writeFile(this.explicitPath, tpl).then(() => {
+            log("Created " + path.relative(process.cwd(), this.explicitPath), ThemeColors.info)
+            process.exit(0)
+        }).catch(this.errorHandler)
     }
 
     private validateAppDir() {

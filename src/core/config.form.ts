@@ -1,4 +1,5 @@
-import { AppDescriptor } from "./app-descriptor";
+import { AppDescriptor } from "./app-descriptor"
+import { TsLibStringUtils } from "ts-lib-string-utils";
 import * as colors from 'colors'
 colors.setTheme({
     silly: 'rainbow',
@@ -23,7 +24,8 @@ export enum ThemeColors {
     help,
     warn,
     debug,
-    error
+    error,
+    bold,
 }
 
 export function log(message: string, color: ThemeColors = ThemeColors.none) {
@@ -39,65 +41,77 @@ export function logMessage(message: string, color: ThemeColors): string {
     return message
 }
 export class ConfigForm {
+
     private _readline: any = require('readline')
     private user: GitUser = new GitUser()
 
-    createInterface(config: AppDescriptor, callback: (config: AppDescriptor) => void) {
-        this.user.init((success: boolean) => {
-            config.author = this.user
-        })
-        const readline: any = this._readline
-        const rl: any = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout
-        })
-        let askCommand = (question: string, callback: (answer: string) => void, validate?: (value: string) => boolean): void => {
-            rl.question(colors.help(question), (answer: any) => {
-                const value: string = String(answer).trim()
-                if (validate !== undefined)
-                    if (validate(value))
-                        callback(value)
-                    else
-                        askCommand(question, callback, validate)
-                else
-                    callback(value)
-            })
-        }
-        let validateName = (value: string) => {
-            const valid: boolean = /^[a-z0-9\-]{3,}$/.test(value)
-            if (!valid)
-                log("Camel case only, minimum 3 characters", ThemeColors.error)
-            return valid
-        }
-        let validateCommand = (value: string) => {
-            const valid: boolean = /^[A-Za-z0-9\-_]{3,}$/.test(value)
-            if (!valid)
-                console.log(colors.error("Minimum 3 characters"))
-            return valid
-        }
+    createInterface(config: AppDescriptor): Promise<AppDescriptor> {
+        return new Promise((resolve: (value: AppDescriptor) => void, reject: (error?: any) => void) => {
 
-        askCommand("Name : ", (value: string) => {
-            config.name = value
-            askCommand("Command : ", (value: string) => {
-                config.command = value
-                askCommand(`User name : `, (answer: string) => {
-                    config.author.name = answer
-                    askCommand(`User email : `, (answer: string) => {
-                        config.author.email = answer
-                        askCommand(`Repository : `, (answer: string) => {
-                            config.author.repository = answer
-                            rl.close()
-                            callback(config)
-                        })
-                        this.user.setProject(config.name)
-                        rl.write(config.author.repository)
-                    })
-                    rl.write(config.author.email)
+            this.user.init((success: boolean) => {
+                config.author = this.user
+            })
+            const readline: any = this._readline
+            const rl: any = readline.createInterface({
+                input: process.stdin,
+                output: process.stdout
+            })
+
+            let askCommand = (question: string, callback: (answer: string) => void, validate?: (value: string) => boolean): void => {
+                rl.question(colors.help(question), (answer: any) => {
+                    const value: string = String(answer).trim()
+                    if (validate !== undefined)
+                        if (validate(value))
+                            callback(value)
+                        else
+                            askCommand(question, callback, validate)
+                    else
+                        callback(value)
                 })
-                rl.write(config.author.name)
-            }, validateCommand)
-        }, validateName)
-        rl.write(config.name)
+            }
+
+            let validateName = (value: string) => {
+                value = value.trim()
+                const valid: boolean = TsLibStringUtils.kebab(value) == value
+                if (!valid)
+                    log("kebab-case only", ThemeColors.error)
+                return valid
+            }
+
+            let validateCommand = (value: string) => {
+                const valid: boolean = 
+                    TsLibStringUtils.kebab(value) == value 
+                    || TsLibStringUtils.pascal(value) == value
+                    || TsLibStringUtils.camel(value) == value
+                if (!valid)
+                    log("kebab-case or cameCase or PascalCase", ThemeColors.error)
+                return valid
+            }
+
+            askCommand("Name : ", (value: string) => {
+                config.name = value
+                askCommand("Command : ", (value: string) => {
+                    config.command = value
+                    askCommand(`User name : `, (answer: string) => {
+                        config.author.name = answer
+                        askCommand(`User email : `, (answer: string) => {
+                            config.author.email = answer
+                            askCommand(`Repository : `, (answer: string) => {
+                                config.author.repository = answer
+                                rl.close()
+                                resolve(config)
+                            })
+                            this.user.setProject(config.name)
+                            rl.write(config.author.repository)
+                        })
+                        rl.write(config.author.email)
+                    })
+                    rl.write(config.author.name)
+                }, validateCommand)
+                rl.write(TsLibStringUtils.camel(config.name))
+            }, validateName)
+            rl.write(config.name)
+        })
     }
 }
 import * as child_process from 'child_process'

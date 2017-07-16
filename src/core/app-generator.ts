@@ -65,9 +65,10 @@ export class AppGenerator {
         for (const f of FILES) {
             let src = this.template(f[0] + TPL_EXT)
             let dst = this.local.apply(null, f[1].concat(f[0]))
-            if (!override)
-                if (fs.existsSync(dst))
-                    continue
+            let exists: boolean = fs.existsSync(dst)
+            // never override app.ts if exists
+            if ((!override && exists) || (exists && f[0] == "app.ts"))
+                continue
             fs.copySync(src, dst)
         }
         this.createCommandsSync(pkg)
@@ -209,9 +210,8 @@ export class AppGenerator {
 
     }
 
-    private copyFiles(override: boolean = true, update: boolean = false): Promise<string[]> {
+    private copyFiles(override: boolean = true): Promise<string[]> {
         return new Promise((nextFn: (files: string[]) => void, errorFn: (error?: any) => void) => {
-
             let i: number = 0
             const n: number = FILES.length
             const files: string[] = []
@@ -226,24 +226,17 @@ export class AppGenerator {
                 let src: string
                 let dst: string
                 if (i < n) {
-                    if (update && FILES[i][0] == "app.ts") {
-                        i++
-                        return nextFile()
-                    }
+                    const isApp: boolean = FILES[i][0] == "app.ts"
                     src = this.template(FILES[i][0] + TPL_EXT)
                     dst = this.local.apply(null, FILES[i][1].concat(FILES[i][0]))
-                    if (!override) {
-                        fs.pathExists(dst).then(exists => {
-                            if (!exists)
-                                copy(src, dst)
-                            else {
-                                i++
-                                nextFile()
-                            }
-                        }).catch(errorFn)
-                    }
-                    else
-                        copy(src, dst)
+                    fs.pathExists(dst).then(exists => {
+                        if (!exists || (override && !isApp)) 
+                            return copy(src, dst)
+                        else {
+                            i++
+                            nextFile()
+                        }
+                    }).catch(errorFn)
                 }
                 else
                     nextFn(files)

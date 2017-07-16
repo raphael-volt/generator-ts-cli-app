@@ -130,17 +130,13 @@ export class AppGenerator {
         const pkgSrc: string = local(PACKAGE_JSON)
         fs.readJSON(pkgSrc)
             .then(pkg => {
-                console.log("update readJSON.then pkg")
                 fs.readJSON(this.template(PACKAGE_JSON + TPL_EXT))
                     .then((tpl: PackageJSON) => {
-                        console.log("update readJSON.then tpl")
                         // is npm install required
                         this._depsChanged = dependenciesDif(pkg, tpl)
                         this.copyFiles(override).then(files => {
-                            console.log("update copyFiles.then")
                             this.createCommands(pkg)
                                 .then(success => {
-                                    console.log("update createCommands.then")
                                     if (!this._depsChanged)
                                         nextFn(pkg)
                                     else
@@ -213,14 +209,14 @@ export class AppGenerator {
 
     }
 
-    private copyFiles(override: boolean = true): Promise<string[]> {
+    private copyFiles(override: boolean = true, update: boolean = false): Promise<string[]> {
         return new Promise((nextFn: (files: string[]) => void, errorFn: (error?: any) => void) => {
 
             let i: number = 0
             const n: number = FILES.length
             const files: string[] = []
             let copy = (src: string, dst: string) => {
-                fs.copy(src, dst).then(() => {
+                fs.copy(src, dst, { overwrite: true }).then(() => {
                     files.push(path.relative(this.cwd, dst))
                     i++
                     nextFile()
@@ -230,6 +226,10 @@ export class AppGenerator {
                 let src: string
                 let dst: string
                 if (i < n) {
+                    if (update && FILES[i][0] == "app.ts") {
+                        i++
+                        return nextFile()
+                    }
                     src = this.template(FILES[i][0] + TPL_EXT)
                     dst = this.local.apply(null, FILES[i][1].concat(FILES[i][0]))
                     if (!override) {

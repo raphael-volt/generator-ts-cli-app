@@ -22,7 +22,7 @@ const inputs: AppDescriptor = {
 }
 
 const appDir: string = path.join(path.dirname(__dirname), "tests/test-app");
-describe.skip('RegExp', () => {
+describe('RegExp', () => {
 
     it("should be a valide name", () => {
         let re: RegExp = /^[A-Za-z0-9\-_]{3,}$/
@@ -112,11 +112,11 @@ describe('Generate', () => {
         ).to.be.true
     })
 
-    it.skip("should initialize npmCommands", () => {
+    it("should initialize npmCommands", () => {
         chai.expect(npmCommands.setProjectDir(appDir)).to.be.true
     })
 
-    it.skip("should install app dependencies", function(done) {
+    it("should install app dependencies", function(done) {
         this.timeout(30000)
         npmCommands.install().subscribe(success => {
             chai.expect(success).to.be.true
@@ -126,7 +126,7 @@ describe('Generate', () => {
         )
     })
 
-    it.skip("should build app", function(done) {
+    it("should build app", function(done) {
         this.timeout(10000)
         npmCommands.build().subscribe(success => {
             chai.expect(success).to.be.true
@@ -136,7 +136,7 @@ describe('Generate', () => {
         )
     })
 
-    it.skip("should test the App", function(done) {
+    it("should test the App", function(done) {
         this.timeout(10000)
         npmCommands.test().subscribe(success => {
             done()

@@ -92,7 +92,7 @@ describe('Update', () => {
             gen.build(config, appDir).then(() => done()).catch(done)
         })
         
-        it("should create app", done => {
+        it("should update app", done => {
             gen.update(appDir).then(() => done()).catch(done)
         })
 

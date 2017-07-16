@@ -10,7 +10,6 @@ import { PACKAGE_JSON } from "./core/filenames";
 
 export class App {
 
-    private commander: commander.CommanderStatic
     private npmCommands: NPMCommands
     private explicitPath: string
     private update: boolean = false
@@ -23,7 +22,6 @@ export class App {
     }
 
     constructor() {
-        this.commander = commander
         this.npmCommands = new NPMCommands()
     }
 
@@ -47,7 +45,7 @@ export class App {
         let pkg: PackageJSON = fs.readJsonSync(path.resolve(__dirname, "..", PACKAGE_JSON))
         this.cwd = process.cwd()
 
-        this.commander
+        commander
             .version(pkg.version)
             .description('CLI TypeScript application generator.')
             .option(
@@ -57,25 +55,32 @@ export class App {
             '-s, --skipscripts', 'Exit without run build and test.',
             () => this.skipScripts = true)
 
-        this.commander.command("new [directory]",
-                "Create a cli TypeScript application.")
-            .action(this.createApp)
-        this.commander.command("n [directory]")
+        commander.command("new [directory]")
+            .description("Create a cli TypeScript application.")
             .action(this.createApp)
 
-        this.commander.command("update [directory]",
-                "Update an existing cli application.")
-            .action(this.updateApp)
-        this.commander.command("u [directory]")
+        commander.command("n [directory]")
+            .description("Create a cli TypeScript application.")
+            .action(this.createApp)
+
+
+        commander.command("update [directory]")
+            .description("Update an existing cli application.")
             .action(this.updateApp)
 
-        this.commander.command("spec <file>", 
-                "Generate a chai test-case. Add spec.ts extension if missing.")
-            .action(this.createSpec)
-        this.commander.command("s <file>")
+        commander.command("u [directory]")
+            .description("Update an existing cli application.")
+            .action(this.updateApp)
+
+        commander.command("spec <file>")
+            .description("Generate a chai test-case. Add spec.ts extension if missing.")
             .action(this.createSpec)
 
-        this.commander.parse(process.argv)
+        commander.command("s <file>")
+            .description("Generate a chai test-case. Add spec.ts extension if missing.")
+            .action(this.createSpec)
+
+        commander.parse(process.argv)
     }
 
     private createSpec = (...args) => {
@@ -83,11 +88,11 @@ export class App {
         const dir: string = path.dirname(this.explicitPath)
         let basename: string = path.basename(this.explicitPath)
         const ext: string = path.extname(basename)
-        switch(true) {
-            case /.spec.ts$/.test(basename): 
+        switch (true) {
+            case /.spec.ts$/.test(basename):
                 break
-                
-            case /.ts$/.test(basename): 
+
+            case /.ts$/.test(basename):
                 basename = basename.slice(0, -3)
 
             case ext == "":
@@ -97,9 +102,9 @@ export class App {
         this.explicitPath = path.join(dir, basename)
         const done = () => {
             this.generateSpec(basename)
-        } 
+        }
         fs.pathExists(dir).then(exists => {
-            if(! exists)
+            if (!exists)
                 fs.mkdirp(dir).then(done)
             else
                 done()
@@ -169,11 +174,13 @@ describe('${filename}', () => {
     }
 
     private updateApp = (...args) => {
+        
         this.update = true
         this.parseArgs(args)
         let libDir: string = this.cwd
         if (this.explicitPath != undefined) {
             libDir = this.explicitPath
+
             process.chdir(libDir)
             this.cwd = libDir
         }
@@ -213,9 +220,9 @@ describe('${filename}', () => {
     }
 
     private buildApp = (success?: boolean) => {
-        if (this.skipScripts) 
+        if (this.skipScripts)
             return this.update ? this.updateComplete() : this.buildComplete()
-        
+
         this.npmCommands.build().subscribe(this.runTest, this.errorHandler)
     }
 

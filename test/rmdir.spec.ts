@@ -6,7 +6,7 @@ import * as path from 'path';
 
 import * as du from "../src/utils/rmdir-r";
 const tests: string = "tests-rmdir"
-describe.skip('rmdir', () => {
+describe('rmdir', () => {
     const d: string = path.dirname(__dirname)
 
     let dirs: string[] = [

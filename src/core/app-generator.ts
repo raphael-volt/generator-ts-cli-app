@@ -65,9 +65,10 @@ export class AppGenerator {
         for (const f of FILES) {
             let src = this.template(f[0] + TPL_EXT)
             let dst = this.local.apply(null, f[1].concat(f[0]))
-            if (!override)
-                if (fs.existsSync(dst))
-                    continue
+            let exists: boolean = fs.existsSync(dst)
+            // never override app.ts if exists
+            if ((!override && exists) || (exists && f[0] == "app.ts"))
+                continue
             fs.copySync(src, dst)
         }
         this.createCommandsSync(pkg)
@@ -130,17 +131,13 @@ export class AppGenerator {
         const pkgSrc: string = local(PACKAGE_JSON)
         fs.readJSON(pkgSrc)
             .then(pkg => {
-                console.log("update readJSON.then pkg")
                 fs.readJSON(this.template(PACKAGE_JSON + TPL_EXT))
                     .then((tpl: PackageJSON) => {
-                        console.log("update readJSON.then tpl")
                         // is npm install required
                         this._depsChanged = dependenciesDif(pkg, tpl)
                         this.copyFiles(override).then(files => {
-                            console.log("update copyFiles.then")
                             this.createCommands(pkg)
                                 .then(success => {
-                                    console.log("update createCommands.then")
                                     if (!this._depsChanged)
                                         nextFn(pkg)
                                     else
@@ -215,12 +212,11 @@ export class AppGenerator {
 
     private copyFiles(override: boolean = true): Promise<string[]> {
         return new Promise((nextFn: (files: string[]) => void, errorFn: (error?: any) => void) => {
-
             let i: number = 0
             const n: number = FILES.length
             const files: string[] = []
             let copy = (src: string, dst: string) => {
-                fs.copy(src, dst).then(() => {
+                fs.copy(src, dst, { overwrite: true }).then(() => {
                     files.push(path.relative(this.cwd, dst))
                     i++
                     nextFile()
@@ -230,20 +226,17 @@ export class AppGenerator {
                 let src: string
                 let dst: string
                 if (i < n) {
+                    const isApp: boolean = FILES[i][0] == "app.ts"
                     src = this.template(FILES[i][0] + TPL_EXT)
                     dst = this.local.apply(null, FILES[i][1].concat(FILES[i][0]))
-                    if (!override) {
-                        fs.pathExists(dst).then(exists => {
-                            if (!exists)
-                                copy(src, dst)
-                            else {
-                                i++
-                                nextFile()
-                            }
-                        }).catch(errorFn)
-                    }
-                    else
-                        copy(src, dst)
+                    fs.pathExists(dst).then(exists => {
+                        if (!exists || (override && !isApp)) 
+                            return copy(src, dst)
+                        else {
+                            i++
+                            nextFile()
+                        }
+                    }).catch(errorFn)
                 }
                 else
                     nextFn(files)
